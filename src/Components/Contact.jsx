@@ -1,4 +1,18 @@
 import { useEffect, useRef, useState } from "react";
+import emailjs from "@emailjs/browser";
+
+// ─── EmailJS Config ────────────────────────────────────────────────────────────
+// Replace these with your actual EmailJS credentials:
+//   1. Go to https://www.emailjs.com → Account → API Keys for PUBLIC_KEY
+//   2. Email Services tab → your Service ID for SERVICE_ID
+//   3. Email Templates tab → your Template ID for TEMPLATE_ID
+//
+// Your template variables should match the field names below:
+//   {{from_name}}, {{from_email}}, {{subject}}, {{message}}
+const EMAILJS_SERVICE_ID  = "service_phjlkjc";
+const EMAILJS_TEMPLATE_ID = "template_apkagzi";
+const EMAILJS_PUBLIC_KEY  = "xgoIAu5jqOBRnzCXh";
+// ───────────────────────────────────────────────────────────────────────────────
 
 const contactInfo = [
   {
@@ -34,11 +48,77 @@ const contactInfo = [
   },
 ];
 
-export default function Contact() {
-  const [visible, setVisible] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
-  const sectionRef = useRef(null);
+const EMPTY_FORM = { name: "", email: "", subject: "", message: "" };
 
+// ── Toast component ────────────────────────────────────────────────────────────
+function Toast({ type, message, onClose }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 5000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  const isSuccess = type === "success";
+
+  return (
+    <div
+      className="fixed bottom-6 right-6 z-50 flex items-start gap-3 px-4 py-3 rounded-xl shadow-2xl border max-w-sm"
+      style={{
+        background: isSuccess ? "rgba(6,30,44,0.95)" : "rgba(30,6,16,0.95)",
+        borderColor: isSuccess ? "rgba(34,211,238,0.35)" : "rgba(239,68,68,0.35)",
+        backdropFilter: "blur(12px)",
+        animation: "toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
+      }}
+    >
+      {/* Icon */}
+      <div
+        className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+          isSuccess
+            ? "bg-gradient-to-br from-cyan-500 to-blue-600"
+            : "bg-gradient-to-br from-red-500 to-rose-600"
+        }`}
+      >
+        {isSuccess ? (
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        )}
+      </div>
+
+      {/* Text */}
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-semibold ${isSuccess ? "text-cyan-300" : "text-red-400"}`}>
+          {isSuccess ? "Message Sent!" : "Failed to Send"}
+        </p>
+        <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">{message}</p>
+      </div>
+
+      {/* Close */}
+      <button
+        onClick={onClose}
+        className="flex-shrink-0 text-slate-600 hover:text-slate-400 transition-colors mt-0.5"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────────
+export default function Contact() {
+  const [visible, setVisible]   = useState(false);
+  const [form, setForm]         = useState(EMPTY_FORM);
+  const [status, setStatus]     = useState("idle"); // "idle" | "sending" | "success" | "error"
+  const [toast, setToast]       = useState(null);   // { type, message } | null
+  const sectionRef              = useRef(null);
+  const formRef                 = useRef(null);
+
+  // Intersection observer for fade-in
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setVisible(true); },
@@ -49,6 +129,50 @@ export default function Contact() {
   }, []);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async () => {
+    // Basic client-side validation
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setToast({ type: "error", message: "Please fill in your name, email, and message before sending." });
+      return;
+    }
+
+    setStatus("sending");
+
+    try {
+      // EmailJS send — template variables must match your EmailJS template
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          from_name:  form.name,
+          from_email: form.email,
+          subject:    form.subject || "(No subject)",
+          message:    form.message,
+        },
+        EMAILJS_PUBLIC_KEY
+      );
+
+      setStatus("success");
+      setForm(EMPTY_FORM); // clear form
+      setToast({
+        type: "success",
+        message: "Your message was sent successfully. I'll get back to you soon!",
+      });
+    } catch (err) {
+      console.error("EmailJS error:", err);
+      setStatus("error");
+      setToast({
+        type: "error",
+        message: "Something went wrong. Please try again or email me directly.",
+      });
+    } finally {
+      // Reset status after a delay so the button returns to normal
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  const isSending = status === "sending";
 
   return (
     <section
@@ -63,6 +187,16 @@ export default function Contact() {
         }
         .fade-up { opacity: 0; }
         .fade-up.visible { animation: fadeUp 0.65s ease both; }
+
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(24px) scale(0.95); }
+          to   { opacity: 1; transform: translateX(0)    scale(1);    }
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .spin { animation: spin 0.8s linear infinite; }
 
         .input-field {
           background: rgba(18, 21, 42, 0.8);
@@ -79,6 +213,10 @@ export default function Contact() {
         .input-field:focus {
           border-color: rgba(34, 211, 238, 0.5);
           box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
+        }
+        .input-field:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       `}</style>
 
@@ -117,20 +255,17 @@ export default function Contact() {
           Have a project in mind or want to collaborate? Feel free to reach out. I'm always open to discussing new opportunities.
         </p>
 
-        {/* Two-column layout — stacks on mobile, side-by-side on lg */}
+        {/* Two-column layout */}
         <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
 
           {/* Left — Contact Info + Let's Work Together */}
           <div className="flex flex-col gap-4 sm:gap-5 w-full lg:w-2/5">
 
-            {/* Contact Information */}
             <div
               className={`fade-up ${visible ? "visible" : ""}`}
               style={{ animationDelay: "160ms" }}
             >
               <h3 className="text-cyan-400 font-bold text-base mb-3 sm:mb-4">Contact Information</h3>
-
-              {/* On sm screens, show info cards in a 1-col list; on md+ they can breathe more */}
               <div className="flex flex-col gap-3">
                 {contactInfo.map((info) => (
                   <div
@@ -149,7 +284,6 @@ export default function Contact() {
               </div>
             </div>
 
-            {/* Let's Work Together */}
             <div
               className={`fade-up rounded-xl border border-cyan-500/20 bg-[#12152a]/60 p-4 sm:p-5 ${visible ? "visible" : ""}`}
               style={{ animationDelay: "300ms" }}
@@ -163,35 +297,41 @@ export default function Contact() {
                 Available for new projects
               </p>
             </div>
-
           </div>
 
           {/* Right — Contact Form */}
           <div
+            ref={formRef}
             className={`fade-up flex-1 flex flex-col gap-3 sm:gap-4 ${visible ? "visible" : ""}`}
             style={{ animationDelay: "240ms" }}
           >
-            {/* Name + Email side-by-side on sm and up */}
+            {/* Name + Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-slate-300 text-sm mb-1.5">Name</label>
+                <label className="block text-slate-300 text-sm mb-1.5">
+                  Name <span className="text-cyan-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="name"
                   value={form.name}
                   onChange={handleChange}
                   placeholder="Your name"
+                  disabled={isSending}
                   className="input-field"
                 />
               </div>
               <div>
-                <label className="block text-slate-300 text-sm mb-1.5">Email</label>
+                <label className="block text-slate-300 text-sm mb-1.5">
+                  Email <span className="text-cyan-500">*</span>
+                </label>
                 <input
                   type="email"
                   name="email"
                   value={form.email}
                   onChange={handleChange}
                   placeholder="your.email@example.com"
+                  disabled={isSending}
                   className="input-field"
                 />
               </div>
@@ -206,34 +346,63 @@ export default function Contact() {
                 value={form.subject}
                 onChange={handleChange}
                 placeholder="Project Inquiry"
+                disabled={isSending}
                 className="input-field"
               />
             </div>
 
             {/* Message */}
             <div>
-              <label className="block text-slate-300 text-sm mb-1.5">Message</label>
+              <label className="block text-slate-300 text-sm mb-1.5">
+                Message <span className="text-cyan-500">*</span>
+              </label>
               <textarea
                 name="message"
                 value={form.message}
                 onChange={handleChange}
                 placeholder="Tell me about your project..."
                 rows={5}
+                disabled={isSending}
                 className="input-field resize-none"
               />
             </div>
 
-            {/* Submit */}
-            <button className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-sm font-bold tracking-wide flex items-center justify-center gap-2 hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 shadow-[0_0_20px_rgba(34,211,238,0.2)] mt-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-              Send Message
+            {/* Submit button */}
+            <button
+              onClick={handleSubmit}
+              disabled={isSending}
+              className="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-sm font-bold tracking-wide flex items-center justify-center gap-2 hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 shadow-[0_0_20px_rgba(34,211,238,0.2)] mt-1 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+            >
+              {isSending ? (
+                <>
+                  {/* Spinner */}
+                  <svg className="w-4 h-4 spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  Sending…
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  Send Message
+                </>
+              )}
             </button>
           </div>
-
         </div>
       </div>
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
     </section>
   );
 }

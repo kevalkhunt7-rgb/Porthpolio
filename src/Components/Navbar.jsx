@@ -14,7 +14,7 @@ export default function Navbar() {
     }, []);
 
     return (
-        <nav  className="fixed top-0 left-0 right-0 z-50 font-mono">
+        <nav className="fixed top-0 left-0 right-0 z-50 font-mono">
             <div
                 className={`backdrop-blur-md bg-[#0d0f1a]/90 border-b border-indigo-900/30 transition-shadow duration-300 ${scrolled ? "shadow-[0_4px_32px_rgba(0,0,0,0.5)]" : ""
                     }`}
@@ -38,8 +38,8 @@ export default function Navbar() {
                                         }
                                     }}
                                     className={`relative cursor-pointer text-2xl font-Patrick-Hand font-semibold tracking-wide pb-0.5 transition-colors duration-200 after:absolute after:bottom-0 after:left-0 after:h-[1.5px] after:rounded-full after:bg-gradient-to-r after:from-cyan-400 after:to-purple-500 after:transition-all after:duration-300 ${active === link
-                                            ? "text-cyan-400 after:w-full"
-                                            : "text-slate-400 hover:text-slate-200 after:w-0 hover:after:w-full"
+                                        ? "text-cyan-400 after:w-full"
+                                        : "text-slate-400 hover:text-slate-200 after:w-0 hover:after:w-full"
                                         }`}
                                 >
                                     {link}
@@ -56,8 +56,8 @@ export default function Navbar() {
                     >
                         <span
                             className={`block w-[22px] h-[1.5px] rounded-full transition-all duration-300 origin-center ${menuOpen
-                                    ? "bg-cyan-400 translate-y-[7px] rotate-45"
-                                    : "bg-slate-400"
+                                ? "bg-cyan-400 translate-y-[7px] rotate-45"
+                                : "bg-slate-400"
                                 }`}
                         />
                         <span
@@ -66,8 +66,8 @@ export default function Navbar() {
                         />
                         <span
                             className={`block w-[22px] h-[1.5px] rounded-full transition-all duration-300 origin-center ${menuOpen
-                                    ? "bg-cyan-400 -translate-y-[7px] -rotate-45"
-                                    : "bg-slate-400"
+                                ? "bg-cyan-400 -translate-y-[7px] -rotate-45"
+                                : "bg-slate-400"
                                 }`}
                         />
                     </button>
@@ -85,6 +85,11 @@ export default function Navbar() {
                                     onClick={() => {
                                         setActive(link);
                                         setMenuOpen(false);
+
+                                        const section = document.getElementById(link.toLowerCase());
+                                        if (section) {
+                                            section.scrollIntoView({ behavior: "smooth" });
+                                        }
                                     }}
                                     className={`text-sm tracking-wide transition-colors duration-200 ${active === link
                                             ? "text-cyan-400"

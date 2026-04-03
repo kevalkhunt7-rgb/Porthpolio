@@ -261,7 +261,7 @@ export default function Hero() {
             style={{ flex: "1 1 260px", display: "flex", justifyContent: "center" }}
           >
             <div
-              className="hero-img-wrap relative"
+              className="hero-img-wrap relative mt-6"
               style={{ position: "relative", width: "100%", maxWidth: "400px" }}
             >
               <div className={`img-float img-card-glow rounded-2xl p-[2px] img-reveal" : ""}`}>

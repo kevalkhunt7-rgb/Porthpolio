@@ -156,16 +156,16 @@ export default function Projects() {
 
                 {/* Buttons */}
                 <div className="flex gap-3 mt-1">
-                  <button
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border ${project.codeBorder} text-xs font-semibold transition-all duration-200`}
+                <a href="https://github.com/kevalkhunt7-rgb/Medique"> <button
+                    className={`flex-1 flex items-center w-20 justify-center gap-2 py-2 rounded-lg border ${project.codeBorder} text-xs font-semibold transition-all duration-200`}
                   >
                     <GithubIcon /> Code
-                  </button>
-                  <button
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg ${project.demoBg} text-white text-xs font-semibold transition-all duration-200`}
+                  </button></a> 
+                  <a href="https://medique-51kbt2gib-kevalkhunt7-5969s-projects.vercel.app/"><button
+                    className={`flex-1 w-20 flex items-center justify-center gap-2 py-2 rounded-lg ${project.demoBg} text-white text-xs font-semibold transition-all duration-200`}
                   >
                     <ExternalIcon /> Demo
-                  </button>
+                  </button></a>
                 </div>
               </div>
             </div>
