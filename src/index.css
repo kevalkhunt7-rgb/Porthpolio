@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* .patrick-hand-regular {
+  font-family: "", cursive;
+  font-weight: 400;
+  font-style: normal;
+} */
+* {
+  cursor: none;
+}
+/* Only hide the default pointer on devices that actually use a mouse */
+@media (min-width: 768px) {
+  html, body, a, button {
+    cursor: none !important;
+  }
+}
+
+/* Ensure mobile users still see their standard interaction highlights */
+@media (max-width: 767px) {
+  html, body {
+    cursor: auto;
+  }
+}@media (min-width: 768px) {
+  * {
+    cursor: none !important;
+  }
+}
+@font-face {
+  font-family: 'Patrick-Hand'; 
+  src: url('./assets/Le\ Cercle\ des\ Artisans.ttf') format('truetype');
+  font-weight: normal;
+
+}
